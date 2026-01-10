@@ -6,13 +6,7 @@ export type BuildOptions = { distDir: string };
 async function postBuild({ distDir }: BuildOptions) {
   const SERVE_JS = 'serve-bun.js';
   const serveCode = `
-import { Hono } from 'hono';
-import { serveStatic } from 'hono/bun';
-
-globalThis.__WAKU_BUN_ADAPTER_HONO__ = Hono;
-globalThis.__WAKU_BUN_ADAPTER_SERVE_STATIC__ = serveStatic;
-
-const { INTERNAL_runFetch } = await import('./server/index.js');
+const { INTERNAL_runFetch, unstable_serverEntry } = await import('./server/index.js');
 
 const host = process.env.HOST || Bun.env.HOST;
 const port = process.env.PORT || Bun.env.PORT;

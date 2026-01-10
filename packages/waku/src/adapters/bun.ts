@@ -1,6 +1,5 @@
 import path from 'node:path';
-// FIXME hopefully we should avoid bundling this
-import { Hono as HonoForDevAndBuild } from 'hono';
+import { Hono } from 'hono';
 import type { MiddlewareHandler } from 'hono';
 import {
   unstable_constants as constants,
@@ -12,30 +11,42 @@ import type { BuildOptions } from './bun-build-enhancer.js';
 const { DIST_PUBLIC } = constants;
 const { contextMiddleware, rscMiddleware, middlewareRunner } = honoMiddleware;
 
+// Check if running in Bun runtime
+const isBunRuntime = typeof (globalThis as any).Bun !== 'undefined';
+
+// Import serveStatic from hono/bun only in Bun runtime
+// This will be tree-shaken in Node.js builds
+let serveStaticFn: typeof import('hono/bun').serveStatic | null = null;
+if (isBunRuntime) {
+  try {
+    // Use dynamic import to avoid bundling issues in Node.js
+    const honoBun = await import('hono/bun');
+    serveStaticFn = honoBun.serveStatic;
+  } catch {
+    // Ignore if hono/bun is not available
+  }
+}
+
 export default createServerEntryAdapter(
   (
-    { processRequest, processBuild, config, notFoundHtml },
+    { processRequest, processBuild, config, isBuild, notFoundHtml },
     options?: {
       middlewareFns?: (() => MiddlewareHandler)[];
       middlewareModules?: Record<string, () => Promise<unknown>>;
     },
   ) => {
     const { middlewareFns = [], middlewareModules = {} } = options || {};
-    const {
-      __WAKU_BUN_ADAPTER_HONO__: Hono = HonoForDevAndBuild,
-      __WAKU_BUN_ADAPTER_SERVE_STATIC__: serveStatic,
-    } = globalThis as any;
     const app = new Hono();
-    app.notFound((c: any) => {
+    app.notFound((c) => {
       if (notFoundHtml) {
         return c.html(notFoundHtml, 404);
       }
       return c.text('404 Not Found', 404);
     });
-    if (serveStatic) {
+    if (isBuild && serveStaticFn) {
       app.use(
         `${config.basePath}*`,
-        serveStatic({
+        serveStaticFn({
           root: path.join(config.distDir, DIST_PUBLIC),
           rewriteRequestPath: (p: string) => p.slice(config.basePath.length - 1),
         }),
