@@ -70,6 +70,11 @@ export function mainPlugin(config: Required<Config>): Plugin {
                 },
               },
             },
+            resolve: {
+              // Externalize React packages to avoid multiple instances
+              // which causes hooks dispatcher to be null during SSR
+              noExternal: /^(?!react$|react-dom|react-server-dom-webpack)/,
+            },
           },
           rsc: {
             build: {
