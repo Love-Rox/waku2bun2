@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { Hono } from 'hono';
+// FIXME hopefully we should avoid bundling this
+import { Hono as HonoForDevAndBuild } from 'hono';
 import type { MiddlewareHandler } from 'hono';
-import { serveStatic } from 'hono/bun';
 import {
   unstable_constants as constants,
   unstable_createServerEntryAdapter as createServerEntryAdapter,
@@ -14,26 +14,30 @@ const { contextMiddleware, rscMiddleware, middlewareRunner } = honoMiddleware;
 
 export default createServerEntryAdapter(
   (
-    { processRequest, processBuild, config, isBuild, notFoundHtml },
+    { processRequest, processBuild, config, notFoundHtml },
     options?: {
       middlewareFns?: (() => MiddlewareHandler)[];
       middlewareModules?: Record<string, () => Promise<unknown>>;
     },
   ) => {
     const { middlewareFns = [], middlewareModules = {} } = options || {};
+    const {
+      __WAKU_BUN_ADAPTER_HONO__: Hono = HonoForDevAndBuild,
+      __WAKU_BUN_ADAPTER_SERVE_STATIC__: serveStatic,
+    } = globalThis as any;
     const app = new Hono();
-    app.notFound((c) => {
+    app.notFound((c: any) => {
       if (notFoundHtml) {
         return c.html(notFoundHtml, 404);
       }
       return c.text('404 Not Found', 404);
     });
-    if (isBuild) {
+    if (serveStatic) {
       app.use(
         `${config.basePath}*`,
         serveStatic({
           root: path.join(config.distDir, DIST_PUBLIC),
-          rewriteRequestPath: (path) => path.slice(config.basePath.length - 1),
+          rewriteRequestPath: (p: string) => p.slice(config.basePath.length - 1),
         }),
       );
     }
