@@ -55,11 +55,24 @@ function rscPlugins(config: Required<Config>) {
   ];
 }
 
+function getServeFileName(adapter: string): string {
+  const adapterName = adapter.split('/').pop() || 'node';
+  if (adapterName === 'cloudflare') {
+    return 'server/serve-cloudflare.js';
+  }
+  return `serve-${adapterName}.js`;
+}
+
 async function startDevServer(
   host: string | undefined,
   port: number,
   config: Required<Config>,
 ) {
+  if (typeof (globalThis as any).Bun !== 'undefined') {
+    console.warn(
+      'Warning: Running dev server with Bun. Some features may not work as expected.',
+    );
+  }
   const server = await vite.createServer({
     configFile: false,
     plugins: [rscPlugins(config)],
@@ -118,9 +131,16 @@ export async function runCommand(
     const host = flags.host;
     const port = await getFreePort(parseInt(flags.port || '8080', 10));
     const distDir = config?.distDir ?? 'dist';
-    const serveFileUrl = pathToFileURL(
-      path.resolve(distDir, 'serve-node.js'),
-    ).href;
+    const serveFile = getServeFileName(config.unstable_adapter);
+    const serveFilePath = path.resolve(distDir, serveFile);
+    if (!existsSync(serveFilePath)) {
+      console.error(`Error: Server file not found: ${serveFilePath}`);
+      console.error(
+        `Make sure you built with the correct adapter (${config.unstable_adapter})`,
+      );
+      process.exit(1);
+    }
+    const serveFileUrl = pathToFileURL(serveFilePath).href;
     if (host) {
       process.env.HOST = host;
     }

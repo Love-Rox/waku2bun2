@@ -6,10 +6,16 @@ export type BuildOptions = { distDir: string };
 async function postBuild({ distDir }: BuildOptions) {
   const SERVE_JS = 'serve-bun.js';
   const serveCode = `
-import { unstable_serverEntry } from './server/index.js';
+import { INTERNAL_runFetch, unstable_serverEntry } from './server/index.js';
+
+const host = process.env.HOST || Bun.env.HOST;
+const port = process.env.PORT || Bun.env.PORT;
+const env = { ...Bun.env };
 
 Bun.serve({
-  fetch: unstable_serverEntry.fetch,
+  fetch: (req, ...args) => INTERNAL_runFetch(env, req, ...args),
+  ...(host ? { hostname: host } : {}),
+  ...(port ? { port: parseInt(port, 10) } : {}),
 });
 `;
   writeFileSync(path.resolve(distDir, SERVE_JS), serveCode);

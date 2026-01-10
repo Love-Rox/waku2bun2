@@ -1,5 +1,8 @@
 import type { Config } from '../../config.js';
 
+const isBunRuntime = () =>
+  typeof (globalThis as any).Bun !== 'undefined';
+
 const getDefaultAdapter = () =>
   process.env.VERCEL
     ? 'waku/adapters/vercel'
@@ -7,7 +10,9 @@ const getDefaultAdapter = () =>
       ? 'waku/adapters/netlify'
       : process.env.CLOUDFLARE || process.env.WORKERS_CI
         ? 'waku/adapters/cloudflare'
-        : 'waku/adapters/node';
+        : isBunRuntime()
+          ? 'waku/adapters/bun'
+          : 'waku/adapters/node';
 
 export function resolveConfig(config: Config | undefined): Required<Config> {
   const resolvedConfig: Required<Config> = {
