@@ -70,11 +70,6 @@ export function mainPlugin(config: Required<Config>): Plugin {
                 },
               },
             },
-            resolve: {
-              // Externalize React packages to avoid multiple instances
-              // which causes hooks dispatcher to be null during SSR
-              noExternal: /^(?!react$|react-dom|react-server-dom-webpack)/,
-            },
           },
           rsc: {
             build: {
@@ -127,6 +122,48 @@ export function mainPlugin(config: Required<Config>): Plugin {
       }
       if (name === 'client') {
         environmentConfig.build.outDir = `${config.distDir}/${DIST_PUBLIC}`;
+      }
+
+      // For SSR environment during build, we need to externalize React
+      // to avoid multiple React instances which causes hooks dispatcher to be null
+      if (env.command === 'build' && name === 'ssr') {
+        // Use rollupOptions.external to force externalize React packages
+        // because @vitejs/plugin-rsc sets noExternal for react/react-dom
+        environmentConfig.build.rollupOptions ??= {};
+        const existingExternal = environmentConfig.build.rollupOptions.external;
+        const reactExternal = [
+          'react',
+          'react/jsx-runtime',
+          'react/jsx-dev-runtime',
+          'react-dom',
+          'react-dom/server',
+          'react-dom/server.edge',
+          'react-dom/client',
+          'react-server-dom-webpack',
+          'react-server-dom-webpack/client',
+          'react-server-dom-webpack/client.browser',
+          'react-server-dom-webpack/server',
+          'react-server-dom-webpack/server.edge',
+        ];
+        if (Array.isArray(existingExternal)) {
+          environmentConfig.build.rollupOptions.external = [
+            ...existingExternal,
+            ...reactExternal,
+          ];
+        } else if (typeof existingExternal === 'function') {
+          environmentConfig.build.rollupOptions.external = (
+            source: string,
+            importer: string | undefined,
+            isResolved: boolean,
+          ) => {
+            if (reactExternal.some((pkg) => source === pkg || source.startsWith(pkg + '/'))) {
+              return true;
+            }
+            return existingExternal(source, importer, isResolved);
+          };
+        } else {
+          environmentConfig.build.rollupOptions.external = reactExternal;
+        }
       }
 
       return {
