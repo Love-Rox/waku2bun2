@@ -219,20 +219,13 @@ export type CreateRoot = (root: RootItem) => void;
 
 /**
  * Root component for all pages
- * ```tsx
- *   <html>
- *     <head></head>
- *     <body>{children}</body>
- *   </html>
- * ```
+ *
+ * Note: DefaultRoot does NOT provide an HTML shell (<html><head><body>).
+ * The layout (_layout.tsx) is expected to provide the full HTML document structure.
+ * This avoids duplicate/nested <html> tags when layouts define their own <html>.
  */
 const DefaultRoot = ({ children }: { children: ReactNode }) => (
-  <ErrorBoundary>
-    <html>
-      <head />
-      <body>{children}</body>
-    </html>
-  </ErrorBoundary>
+  <ErrorBoundary>{children}</ErrorBoundary>
 );
 
 const createNestedElements = (

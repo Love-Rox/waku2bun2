@@ -18,15 +18,7 @@ import { encodeFuncId, encodeRscPath } from '../lib/utils/rsc-path.js';
 const { createFromFetch, encodeReply, createTemporaryReferenceSet } =
   RSDWClient;
 
-const DEFAULT_HTML_HEAD = [
-  <meta charSet="utf-8" key="charset" />,
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-    key="viewport"
-  />,
-  <meta name="generator" content="Waku" key="generator" />,
-];
+// DEFAULT_HTML_HEAD removed - layouts provide their own meta tags
 
 const BASE_RSC_PATH = `${import.meta.env?.WAKU_CONFIG_BASE_PATH}${
   import.meta.env?.WAKU_CONFIG_RSC_BASE
@@ -301,13 +293,13 @@ export const Root = ({
     },
     [fetchCache],
   );
+  // Note: DEFAULT_HTML_HEAD is NOT included here.
+  // The app's layout should provide its own <html><head>...</head></html> structure.
+  // This ensures SSR and client-side React trees match for proper hydration.
   return (
     <EnhanceFetchRscInternalContext value={enhanceFetchRscInternal}>
       <RefetchContext value={refetch}>
-        <ElementsContext value={elements}>
-          {DEFAULT_HTML_HEAD}
-          {children}
-        </ElementsContext>
+        <ElementsContext value={elements}>{children}</ElementsContext>
       </RefetchContext>
     </EnhanceFetchRscInternalContext>
   );
@@ -377,8 +369,9 @@ export const INTERNAL_ServerRoot = ({
   elementsPromise: Promise<Elements>;
   children: ReactNode;
 }) => (
-  <ElementsContext value={elementsPromise}>
-    {DEFAULT_HTML_HEAD}
-    {children}
-  </ElementsContext>
+  // Note: DEFAULT_HTML_HEAD is intentionally NOT included here for SSR.
+  // The app's layout should provide its own <html><head>...</head></html> structure.
+  // Including DEFAULT_HTML_HEAD here would cause duplicate/nested HTML structure
+  // because the app already returns a complete <html> element.
+  <ElementsContext value={elementsPromise}>{children}</ElementsContext>
 );
