@@ -63,6 +63,30 @@ function getServeFileName(adapter: string): string {
   return `serve-${adapterName}.js`;
 }
 
+function findAvailableServeFile(
+  distDir: string,
+  preferredAdapter: string,
+): { serveFile: string; fallback: boolean } | null {
+  const isBun = typeof (globalThis as any).Bun !== 'undefined';
+  const preferredFile = getServeFileName(preferredAdapter);
+  const preferredPath = path.resolve(distDir, preferredFile);
+
+  // First try the preferred adapter
+  if (existsSync(preferredPath)) {
+    return { serveFile: preferredFile, fallback: false };
+  }
+
+  // Fallback: serve-node.js works in both Node.js and Bun
+  if (isBun) {
+    const nodePath = path.resolve(distDir, 'serve-node.js');
+    if (existsSync(nodePath)) {
+      return { serveFile: 'serve-node.js', fallback: true };
+    }
+  }
+
+  return null;
+}
+
 async function startDevServer(
   host: string | undefined,
   port: number,
@@ -131,15 +155,21 @@ export async function runCommand(
     const host = flags.host;
     const port = await getFreePort(parseInt(flags.port || '8080', 10));
     const distDir = config?.distDir ?? 'dist';
-    const serveFile = getServeFileName(config.unstable_adapter);
-    const serveFilePath = path.resolve(distDir, serveFile);
-    if (!existsSync(serveFilePath)) {
-      console.error(`Error: Server file not found: ${serveFilePath}`);
+    const result = findAvailableServeFile(distDir, config.unstable_adapter);
+    if (!result) {
+      const expectedFile = getServeFileName(config.unstable_adapter);
+      console.error(`Error: Server file not found: ${path.resolve(distDir, expectedFile)}`);
       console.error(
         `Make sure you built with the correct adapter (${config.unstable_adapter})`,
       );
       process.exit(1);
     }
+    if (result.fallback) {
+      console.warn(
+        `Warning: ${getServeFileName(config.unstable_adapter)} not found, using ${result.serveFile} instead.`,
+      );
+    }
+    const serveFilePath = path.resolve(distDir, result.serveFile);
     const serveFileUrl = pathToFileURL(serveFilePath).href;
     if (host) {
       process.env.HOST = host;
