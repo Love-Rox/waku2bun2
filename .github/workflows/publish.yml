@@ -1,0 +1,60 @@
+name: Publish to GitHub Packages
+
+on:
+  push:
+    branches:
+      - feature/bun-native-support
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@sasagar'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build packages
+        run: pnpm run compile
+
+      - name: Configure package for GitHub Packages
+        working-directory: packages/waku
+        run: |
+          # Update package name for GitHub Packages
+          node -e "
+            const pkg = require('./package.json');
+            pkg.name = '@sasagar/waku';
+            pkg.repository = {
+              type: 'git',
+              url: 'https://github.com/sasagar/waku.git',
+              directory: 'packages/waku'
+            };
+            pkg.publishConfig = {
+              registry: 'https://npm.pkg.github.com'
+            };
+            require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2));
+          "
+
+      - name: Publish to GitHub Packages
+        working-directory: packages/waku
+        run: pnpm publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

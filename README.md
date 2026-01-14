@@ -46,7 +46,33 @@ git push origin feature/bun-native-support
 
 ## インストール
 
-このフォークを使用する場合：
+### GitHub Packages から（推奨）
+
+1. `.npmrc` をプロジェクトルートに作成：
+
+```ini
+@sasagar:registry=https://npm.pkg.github.com
+```
+
+2. パッケージをインストール：
+
+```bash
+npm install @sasagar/waku
+# または
+pnpm add @sasagar/waku
+```
+
+3. `package.json` でエイリアスを設定（オプション）：
+
+```json
+{
+  "dependencies": {
+    "waku": "npm:@sasagar/waku@latest"
+  }
+}
+```
+
+### ローカル開発用
 
 ```bash
 git clone https://github.com/sasagar/waku.git
