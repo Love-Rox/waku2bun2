@@ -19,19 +19,58 @@ A fork of [Waku](https://github.com/wakujs/waku) focused on native Bun runtime s
 ### Recommended Workflow
 
 ```bash
-# Development & Build (stable with Node.js)
-node waku dev
-node waku build
+# Development & Build (use Node.js for stability)
+pnpm waku dev
+pnpm waku build
 
-# Production (fast execution with Bun)
-bun waku start
+# Production (Bun native execution)
+bun dist/serve-bun.js
 ```
+
+### Configuration
+
+#### 1. Set Bun adapter in `waku.config.ts`:
+
+```typescript
+import { defineConfig } from "waku/config";
+
+export default defineConfig({
+  unstable_adapter: "waku/adapters/bun",
+  // ... other options
+});
+```
+
+This ensures `serve-bun.js` is generated during build, even when building with Node.js.
+
+#### 2. Configure `package.json` scripts:
+
+```json
+{
+  "scripts": {
+    "dev": "waku dev",
+    "build": "waku build",
+    "start": "bun dist/serve-bun.js",
+    "start:node": "waku start"
+  }
+}
+```
+
+### Why `bun dist/serve-bun.js` instead of `bun waku start`?
+
+When using pnpm/npm, the `waku` binary is wrapped in a shell script that explicitly calls `node`:
+
+```sh
+exec node "$basedir/../waku/cli.js" "$@"
+```
+
+This means `bun waku start` still runs under Node.js, not Bun. To achieve true Bun native execution, run `serve-bun.js` directly with Bun.
 
 ### Limitations
 
-- `bun waku dev` / `bun waku build` internally use Node.js (for Vite compatibility)
-- `bunx --bun waku build` has issues with React's `react-server` condition resolution during SSG
-- Only production server execution runs natively on Bun
+- **Build phase**: Must use Node.js (`pnpm waku build`) due to Vite/React compatibility
+- **Dev server**: Must use Node.js (`pnpm waku dev`)
+- **`bunx --bun waku build`**: Fails due to React's `react-server` export condition not being fully supported by Bun
+- **Production only**: Only the production server runs natively on Bun
 
 ## Installation
 
