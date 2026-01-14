@@ -1,87 +1,86 @@
 # waku2bun2
 
-Bunネイティブ対応を目指した [Waku](https://github.com/wakujs/waku) のフォークです。
+A fork of [Waku](https://github.com/wakujs/waku) focused on native Bun runtime support.
 
-## このフォークについて
+## About This Fork
 
-**waku2bun2** は、Wakuフレームワークを Bun ランタイムでネイティブ実行できるようにすることを目的としたフォークです。本家Wakuがメジャーリリースを完了した後、これらの変更をPRとして提案する予定です。
+**waku2bun2** is a fork of the Waku framework that enables native execution on the Bun runtime. These changes are intended to be proposed as a PR to the upstream repository after Waku's major release.
 
-### 変更点
+### Changes from Upstream
 
-| 変更 | 説明 |
-|------|------|
-| Bunアダプター修正 | SSR・静的ファイル配信の問題を修正 |
-| React複数インスタンス問題修正 | `resolve.dedupe` でReactの重複バンドルを防止 |
-| Content-Type charset修正 | UTF-8（日本語・絵文字）の正しい表示 |
-| HTML重複タグ防止 | SSR出力時のタグ重複を修正 |
-| CLIフォールバック機能 | `bun waku start` で `serve-node.js` へ自動フォールバック |
+| Change | Description |
+|--------|-------------|
+| Bun Adapter Fixes | Fixed SSR and static file serving issues |
+| React Multiple Instances Fix | Prevent duplicate React bundling with `resolve.dedupe` |
+| Content-Type Charset Fix | Proper UTF-8 display for Japanese text and emoji |
+| Duplicate HTML Tags Prevention | Fixed tag duplication in SSR output |
+| CLI Fallback Feature | Auto-fallback to `serve-node.js` when running `bun waku start` |
 
-### 推奨ワークフロー
+### Recommended Workflow
 
 ```bash
-# 開発・ビルド（Node.jsで安定動作）
+# Development & Build (stable with Node.js)
 node waku dev
 node waku build
 
-# 本番（Bunで高速実行）
+# Production (fast execution with Bun)
 bun waku start
 ```
 
-### 制限事項
+### Limitations
 
-- `bun waku dev` / `bun waku build` は内部でNode.jsを使用します（Vite互換性のため）
-- `bunx --bun waku build` はSSG段階でReactの `react-server` 条件解決に問題があります
-- 本番サーバーの実行のみBunネイティブで動作します
+- `bun waku dev` / `bun waku build` internally use Node.js (for Vite compatibility)
+- `bunx --bun waku build` has issues with React's `react-server` condition resolution during SSG
+- Only production server execution runs natively on Bun
 
-## 本家との同期
+## Installation
 
-```bash
-# upstreamから最新を取得
-git fetch upstream
-git merge upstream/main
+### From GitHub Packages
 
-# コンフリクトを解決後
-git push origin feature/bun-native-support
-```
+This package is published to GitHub Packages and requires authentication.
 
-## インストール
-
-### GitHub Packages から（推奨）
-
-1. `.npmrc` をプロジェクトルートに作成：
+#### 1. Create `.npmrc` in your project root:
 
 ```ini
-@sasagar:registry=https://npm.pkg.github.com
+@love-rox:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
-2. パッケージをインストール：
+#### 2. Set up GitHub authentication:
 
 ```bash
-npm install @sasagar/waku
-# または
-pnpm add @sasagar/waku
+# Add read:packages scope to your GitHub CLI token
+gh auth refresh -h github.com -s read:packages
 ```
 
-3. `package.json` でエイリアスを設定（オプション）：
+#### 3. Install the package:
+
+```bash
+GITHUB_TOKEN=$(gh auth token) npm install @love-rox/waku
+# or
+GITHUB_TOKEN=$(gh auth token) pnpm add @love-rox/waku
+```
+
+#### 4. (Optional) Use as `waku` alias in `package.json`:
 
 ```json
 {
   "dependencies": {
-    "waku": "npm:@sasagar/waku@latest"
+    "waku": "npm:@love-rox/waku@latest"
   }
 }
 ```
 
-### ローカル開発用
+### For Local Development
 
 ```bash
-git clone https://github.com/sasagar/waku.git
+git clone https://github.com/Love-Rox/waku.git
 cd waku
 pnpm install
 pnpm run compile
 ```
 
-プロジェクトで使用：
+Link in your project:
 
 ```json
 {
@@ -91,19 +90,30 @@ pnpm run compile
 }
 ```
 
+## Syncing with Upstream
+
+```bash
+# Fetch latest from upstream
+git fetch upstream
+git merge upstream/main
+
+# After resolving conflicts
+git push origin feature/bun-native-support
+```
+
 ---
 
-# Waku (Original README)
+# Waku (Original)
 
-以下は本家Wakuの説明です。
+The following is the original Waku description.
 
 ---
 
 ## Waku
 
-The minimal React framework
+⛩️ The minimal React framework
 
-visit [waku.gg](https://waku.gg) or `npm create waku@latest`
+Visit [waku.gg](https://waku.gg) or `npm create waku@latest`
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/wakujs/waku/test.yml?branch=main&style=flat&colorA=000000&colorB=000000)](https://github.com/wakujs/waku/actions?query=workflow%3ATest)
 [![Version](https://img.shields.io/npm/v/waku?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/waku)
@@ -112,13 +122,9 @@ visit [waku.gg](https://waku.gg) or `npm create waku@latest`
 
 ### Introduction
 
-**Waku** _(wah-ku)_ or **わく** is the minimal React framework. It's lightweight and designed for a fun developer experience, yet supports all the latest React 19 features like server components and actions. Built for marketing sites, headless commerce, and web apps. For large enterprise applications, you may prefer a heavier framework.
+**Waku** _(wah-ku)_ or **わく** is the minimal React framework. It's lightweight and designed for a fun developer experience, yet supports all the latest React 19 features like server components and actions.
 
-> Please try Waku on non-production projects and report any issues you find. Contributors are welcome.
-
-### Getting started
-
-Start a new Waku project with the `create` command for your preferred package manager. It will scaffold a new project with our default [Waku starter](https://github.com/wakujs/waku/tree/main/examples/01_template).
+### Getting Started
 
 ```sh
 npm create waku@latest
@@ -126,19 +132,19 @@ npm create waku@latest
 
 #### Commands
 
-- `waku dev` to start the local development server
-- `waku build` to generate a production build
-- `waku start` to serve the production build locally
+- `waku dev` - Start the local development server
+- `waku build` - Generate a production build
+- `waku start` - Serve the production build locally
 
 **Node.js version requirement:** `^24.0.0` or `^22.12.0` or `^20.19.0`
 
 ### Documentation
 
-詳細なドキュメントは [waku.gg](https://waku.gg) または本家リポジトリを参照してください。
+For detailed documentation, visit [waku.gg](https://waku.gg) or the [upstream repository](https://github.com/wakujs/waku).
 
 ### Community
 
-Please join our friendly [GitHub discussions](https://github.com/wakujs/waku/discussions) or [Discord server](https://discord.gg/MrQdmzd) to participate in the Waku community. Hope to see you there!
+Join our friendly [GitHub discussions](https://github.com/wakujs/waku/discussions) or [Discord server](https://discord.gg/MrQdmzd).
 
 ### License
 

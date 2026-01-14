@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@sasagar'
+          scope: '@love-rox'
 
       - name: Install dependencies
         run: pnpm install
@@ -41,10 +41,10 @@ jobs:
           # Update package name for GitHub Packages
           node -e "
             const pkg = require('./package.json');
-            pkg.name = '@sasagar/waku';
+            pkg.name = '@love-rox/waku';
             pkg.repository = {
               type: 'git',
-              url: 'https://github.com/sasagar/waku.git',
+              url: 'https://github.com/Love-Rox/waku.git',
               directory: 'packages/waku'
             };
             pkg.publishConfig = {
