@@ -20,6 +20,17 @@ export function mainPlugin(config: Required<Config>): Plugin {
     async config(_config) {
       let viteRscConfig: UserConfig = {
         base: config.basePath,
+        resolve: {
+          // Dedupe React packages to prevent multiple instances
+          // which causes hooks to fail with null dispatcher error
+          dedupe: [
+            'react',
+            'react/jsx-runtime',
+            'react/jsx-dev-runtime',
+            'react-dom',
+            'react-dom/client',
+          ],
+        },
         define: {
           'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
           'import.meta.env.WAKU_CONFIG_BASE_PATH': JSON.stringify(
