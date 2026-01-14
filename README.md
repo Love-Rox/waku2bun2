@@ -16,61 +16,80 @@ A fork of [Waku](https://github.com/wakujs/waku) focused on native Bun runtime s
 | Duplicate HTML Tags Prevention | Fixed tag duplication in SSR output |
 | CLI Fallback Feature | Auto-fallback to `serve-node.js` when running `bun waku start` |
 
-### Recommended Workflow
+### Current Status: Bun Native Support Blocked
 
-```bash
-# Development & Build (use Node.js for stability)
-pnpm waku dev
-pnpm waku build
+⚠️ **Bun does not currently support React Server Components (RSC).**
 
-# Production (Bun native execution)
-bun dist/serve-bun.js
+Bun lacks support for React's `react-server` export condition, which is required for RSC processing. This affects all phases of Waku application execution:
+
+| Phase | Bun Support | Reason |
+|-------|-------------|--------|
+| Build (`waku build`) | ❌ | `react-server` condition required for SSG |
+| Dev Server (`waku dev`) | ❌ | `react-server` condition required |
+| Production Server | ❌ | RSC requests require `react-server` at runtime |
+
+### Error Example
+
+When running with Bun, you may see:
+```
+Export named 'captureOwnerStack' not found in module 'react/index.js'
 ```
 
-### Configuration
+This is because Bun cannot resolve the `react-server` export condition.
 
-#### 1. Set Bun adapter in `waku.config.ts`:
+### Recommended Workflow (Current)
+
+Until Bun adds RSC support, use Node.js for all phases:
+
+```bash
+# Development
+pnpm waku dev
+
+# Build
+pnpm waku build
+
+# Production
+node dist/serve-node.js
+# or with port
+PORT=3000 node dist/serve-node.js
+```
+
+### What This Fork Provides
+
+While full Bun native support is blocked, this fork includes fixes that improve Waku stability:
+
+| Fix | Description |
+|-----|-------------|
+| React Multiple Instances | Prevent duplicate React bundling with `resolve.dedupe` |
+| Content-Type Charset | Proper UTF-8 display for Japanese text and emoji |
+| Duplicate HTML Tags | Fixed tag duplication in SSR output |
+| CLI Fallback | Auto-fallback to `serve-node.js` when `serve-bun.js` fails |
+
+### Future: When Bun Supports RSC
+
+Once Bun adds `react-server` export condition support, you can use:
 
 ```typescript
+// waku.config.ts
 import { defineConfig } from "waku/config";
 
 export default defineConfig({
   unstable_adapter: "waku/adapters/bun",
-  // ... other options
 });
 ```
 
-This ensures `serve-bun.js` is generated during build, even when building with Node.js.
-
-#### 2. Configure `package.json` scripts:
-
 ```json
+// package.json
 {
   "scripts": {
-    "dev": "waku dev",
-    "build": "waku build",
-    "start": "bun dist/serve-bun.js",
-    "start:node": "waku start"
+    "start": "bun dist/serve-bun.js"
   }
 }
 ```
 
-### Why `bun dist/serve-bun.js` instead of `bun waku start`?
+### Tracking Bun RSC Support
 
-When using pnpm/npm, the `waku` binary is wrapped in a shell script that explicitly calls `node`:
-
-```sh
-exec node "$basedir/../waku/cli.js" "$@"
-```
-
-This means `bun waku start` still runs under Node.js, not Bun. To achieve true Bun native execution, run `serve-bun.js` directly with Bun.
-
-### Limitations
-
-- **Build phase**: Must use Node.js (`pnpm waku build`) due to Vite/React compatibility
-- **Dev server**: Must use Node.js (`pnpm waku dev`)
-- **`bunx --bun waku build`**: Fails due to React's `react-server` export condition not being fully supported by Bun
-- **Production only**: Only the production server runs natively on Bun
+- [Bun Issue: React Server Components support](https://github.com/oven-sh/bun/issues)
 
 ## Installation
 
@@ -129,15 +148,32 @@ Link in your project:
 }
 ```
 
+## Branch Structure
+
+```
+main (upstream mirror)
+  └── Synced with wakujs/waku main branch
+
+waku2bun2 (default branch)
+  └── Bun support changes + upstream merged
+```
+
 ## Syncing with Upstream
 
 ```bash
-# Fetch latest from upstream
+# 1. Fetch latest from upstream
 git fetch upstream
-git merge upstream/main
 
-# After resolving conflicts
+# 2. Update main to match upstream
+git checkout main
+git reset --hard upstream/main
 git push origin main
+
+# 3. Merge into waku2bun2
+git checkout waku2bun2
+git merge main
+# Resolve conflicts if any
+git push origin waku2bun2
 ```
 
 ---
