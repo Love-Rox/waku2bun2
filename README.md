@@ -74,8 +74,8 @@ GITHUB_TOKEN=$(gh auth token) pnpm add @love-rox/waku
 ### For Local Development
 
 ```bash
-git clone https://github.com/Love-Rox/waku.git
-cd waku
+git clone https://github.com/Love-Rox/waku2bun2.git
+cd waku2bun2
 pnpm install
 pnpm run compile
 ```
@@ -98,7 +98,7 @@ git fetch upstream
 git merge upstream/main
 
 # After resolving conflicts
-git push origin feature/bun-native-support
+git push origin main
 ```
 
 ---

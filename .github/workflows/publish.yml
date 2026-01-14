@@ -44,7 +44,7 @@ jobs:
             pkg.name = '@love-rox/waku';
             pkg.repository = {
               type: 'git',
-              url: 'https://github.com/Love-Rox/waku.git',
+              url: 'https://github.com/Love-Rox/waku2bun2.git',
               directory: 'packages/waku'
             };
             pkg.publishConfig = {
